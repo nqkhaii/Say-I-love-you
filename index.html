@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>💖 Lời tỏ tình 💖</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--rose:#d63384;--pink:#ff5c9a;--bg1:#ffdee9;--bg2:#b5fffc}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Poppins,sans-serif;
+  background:linear-gradient(120deg,var(--bg1),var(--bg2));
+  color:#333;-webkit-font-smoothing:antialiased;
+  overflow:hidden;height:100vh;width:100vw;
+  display:flex;justify-content:center;align-items:center;
+}
+body::before{
+  content:"";position:fixed;inset:-20%;
+  background:conic-gradient(from 0deg at 50% 50%,#ffd1e6,#fff,#c2f3ff,#ffd1e6);
+  filter:blur(120px) opacity(.35);animation:spin 30s linear infinite;z-index:-2;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.wrap{
+  width:min(600px,92vw);
+  height:auto;
+  padding:20px 24px;
+  background:rgba(255,255,255,.7);
+  border-radius:24px;
+  text-align:center;
+  box-shadow:0 10px 40px rgba(0,0,0,.1);
+  position:relative;z-index:1;
+}
+h1{font-family:"Great Vibes",cursive;font-size:clamp(34px,6vw,60px);color:var(--rose)}
+.sub{opacity:.7;margin-bottom:8px}
+input{
+  padding:10px 14px;border:1.5px solid var(--rose);
+  border-radius:14px;width:100%;font-size:15px;margin:5px 0;
+}
+.btn{
+  padding:10px 18px;border:none;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,#ff77b3,#ff4da6);
+  color:#fff;font-weight:600;box-shadow:0 6px 16px rgba(255,77,166,.35);
+  transition:transform .15s;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn.secondary{background:#fff;color:var(--rose);border:1.5px solid var(--rose)}
+#scene{display:none}
+
+/* ===== image smaller ===== */
+.photoWrap{
+  width:min(300px,70vw);max-height:34vh;
+  margin:8px auto 10px;padding:6px;
+  border-radius:16px;overflow:hidden;
+  background:rgba(255,255,255,.55);
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+}
+.photoWrap img{
+  width:100%;height:auto;max-height:30vh;object-fit:contain;border-radius:12px;
+  animation:float 10s ease-in-out infinite;
+}
+@keyframes float{50%{transform:translateY(-4px)}}
+
+/* ===== text ===== */
+.greeting{font-family:"Great Vibes",cursive;color:var(--rose);font-size:clamp(28px,5vw,46px);margin:6px 0}
+.line{opacity:0;transform:translateY(-20px);font-size:17px;animation:dropIn .8s forwards}
+@keyframes dropIn{to{opacity:1;transform:translateY(0)}}
+.heartbeat{animation:beat 1.3s infinite alternate}
+@keyframes beat{to{transform:scale(1.1);color:#ff4081}}
+.choices{margin-top:10px;display:flex;gap:8px;justify-content:center}
+.firework{position:fixed;width:6px;height:6px;border-radius:50%;
+background:radial-gradient(circle,#fff,var(--rose));pointer-events:none;animation:explode 1s ease-out forwards}
+@keyframes explode{0%{transform:scale(0);opacity:1}80%{transform:scale(1);opacity:1}100%{transform:scale(1.2);opacity:0}}
+@keyframes rise{0%{transform:translateY(0)}100%{transform:translateY(-110vh);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP ===== -->
+<div class="wrap" id="setup">
+  <h1>💌 Gửi đến người đặc biệt 💌</h1>
+  <div class="sub">Nhập tên và link ảnh ✨</div>
+  <input id="name" placeholder="Tên của cậu...">
+  <input id="imgUrl" placeholder="Link ảnh (công khai)...">
+  <button class="btn" id="createLinkBtn">Tạo Link 💌</button>
+  <div id="linkArea" style="display:none;margin-top:10px;">
+    <input id="linkBox" readonly>
+    <button class="btn secondary" id="copyBtn">Copy Link</button>
+    <button class="btn" id="previewBtn">Xem thử 💖</button>
+  </div>
+</div>
+
+<!-- ===== SCENE ===== -->
+<div class="wrap" id="scene">
+  <div class="greeting" id="toName"></div>
+  <div class="photoWrap" id="photoWrap"><img id="photo" referrerpolicy="no-referrer"/></div>
+  <div id="typeArea"></div>
+  <div class="choices">
+    <button class="btn" id="yesBtn">Có 💘</button>
+    <button class="btn secondary" id="noBtn">Không 😳</button>
+  </div>
+  <div id="final" style="margin-top:8px;font-family:'Great Vibes',cursive;font-size:34px;color:var(--rose);display:none;">
+    Yêu cậu mãi mãi 💘
+  </div>
+</div>
+
+<audio id="bgm" loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/30/audio_9c3cc46dd5.mp3?filename=romantic-piano-ambient-112199.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const $=id=>document.getElementById(id);
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const qs=new URLSearchParams(location.search);
+
+/* ===== floating hearts & petals ===== */
+function float(icon,time){const e=document.createElement('div');
+e.textContent=icon;e.style.position='fixed';
+e.style.left=rand(0,100)+'vw';e.style.bottom='-10px';
+e.style.fontSize=rand(18,26)+'px';e.style.opacity=.8;
+e.style.animation=`rise ${time}s linear`;document.body.appendChild(e);
+setTimeout(()=>e.remove(),time*1000);}
+setInterval(()=>float('💖',8),500);
+setInterval(()=>float('🌸',10),600);
+
+/* ===== text lines ===== */
+function showLines(name){
+  const lines=[
+    "Tớ không biết từ khi nào...",
+    "nhưng mỗi lần nhìn thấy cậu, tim lại lỡ nhịp.",
+    "Tớ chỉ muốn nói rằng...",
+    `Tớ thích cậu rất nhiều, <span class='heartbeat'>${name}</span> làm người thương của tớ nha 💖`
+  ];
+  const area=$("typeArea"); area.innerHTML="";
+  lines.forEach((txt,i)=>{
+    const div=document.createElement("div");
+    div.className="line";
+    div.style.animationDelay=(i*0.6)+"s";
+    div.innerHTML=txt;
+    area.appendChild(div);
+  });
+}
+
+/* ===== fireworks ===== */
+function firework(x,y,color="#ff4da6"){
+  for(let i=0;i<20;i++){
+    const d=document.createElement("div");
+    d.className="firework";
+    d.style.left=x+"px";d.style.top=y+"px";
+    d.style.background=`radial-gradient(circle,${color},transparent)`;
+    d.style.transform=`translate(${rand(-80,80)}px,${rand(-80,80)}px) scale(0)`;
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),1000);
+  }
+}
+
+/* ===== main scene ===== */
+function showScene(name,img){
+  $("setup").style.display="none";
+  $("scene").style.display="block";
+  $("toName").innerHTML=`Dành cho <span style="color:var(--rose)">${name}</span> ✨`;
+  if(img){$("photo").src=img;}else{$("photoWrap").style.display="none";}
+  showLines(name);
+}
+
+/* ===== setup ===== */
+$("createLinkBtn").onclick=()=>{
+  const name=$("name").value.trim(),img=$("imgUrl").value.trim();
+  if(!name){alert("Nhập tên nhé 💕");return;}
+  const url=new URL(location.href);
+  url.searchParams.set("name",name);
+  if(img)url.searchParams.set("img",img);
+  $("linkBox").value=url.toString();
+  $("linkArea").style.display="block";
+};
+$("copyBtn").onclick=()=>{
+  navigator.clipboard.writeText($("linkBox").value);
+  $("copyBtn").textContent="Đã copy 💌";
+  setTimeout(()=>$("copyBtn").textContent="Copy Link",1200);
+};
+$("previewBtn").onclick=()=>{
+  const name=$("name").value.trim(),img=$("imgUrl").value.trim();
+  showScene(name,img);
+};
+
+/* ===== open from link ===== */
+const pname=qs.get("name"),pimg=qs.get("img");
+if(pname){showScene(pname,pimg);}
+
+/* ===== buttons ===== */
+$("noBtn").addEventListener("mouseover",()=>{
+  $("noBtn").style.position='fixed';
+  $("noBtn").style.left=rand(10,80)+'vw';
+  $("noBtn").style.top=rand(10,70)+'vh';
+});
+$("yesBtn").onclick=()=>{
+  $("final").style.display="block";
+  for(let i=0;i<6;i++){
+    setTimeout(()=>firework(rand(100,innerWidth-100),rand(100,innerHeight-100)),i*200);
+  }
+};
+</script>
+</body>
+</html>
